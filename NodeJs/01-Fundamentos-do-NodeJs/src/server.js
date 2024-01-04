@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { json } from './middewares/json.js';
 const port = 3333
 
 //GET => Buscar um recurso do back-end
@@ -11,27 +12,31 @@ const port = 3333
 
 const users = []
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
 
-    const {method, url} = req
+    const { method, url } = req
 
-    if(method === 'GET' && url === '/users'){
+    await json(req, res)
+
+    if (method === 'GET' && url === '/users') {
         return res
-        .setHeader('Content-type', 'application/json')
-        .end(JSON.stringify(users))
+            .end(JSON.stringify(users))
     }
 
-    if(method === 'POST' && url === '/users'){
+    if (method === 'POST' && url === '/users') {
+
+        const { name, email, id } = req.body
+
         users.push({
-            id: 1,
-            name: 'John Doe',
-            email: 'johndoe@example.com',
+            id,
+            name,
+            email
         })
         return res.writeHead(201).end('Criação de usuários')
     }
     return res.writeHead(404).end()
 })
 
-server.listen(port,() => {
+server.listen(port, () => {
     console.log(`Server listening port ${port}`);
 })
