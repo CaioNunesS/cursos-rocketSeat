@@ -1,5 +1,7 @@
 import http from 'node:http';
 import { json } from './middewares/json.js';
+import { routes } from './routes.js';
+
 const port = 3333
 
 //GET => Buscar um recurso do back-end
@@ -10,30 +12,24 @@ const port = 3333
 
 //Stateful - Stateless
 
-const users = []
-
 const server = http.createServer(async (req, res) => {
 
     const { method, url } = req
 
     await json(req, res)
 
-    if (method === 'GET' && url === '/users') {
-        return res
-            .end(JSON.stringify(users))
+    const route = routes.find(route => {
+        return route.method === method && route.path.test(url)
+    })
+
+    if (route) {
+        const routeParams = req.url.match(route.path)
+
+        req.params = { ...routeParams.groups }
+
+        return route.handler(req, res)
     }
 
-    if (method === 'POST' && url === '/users') {
-
-        const { name, email, id } = req.body
-
-        users.push({
-            id,
-            name,
-            email
-        })
-        return res.writeHead(201).end('Criação de usuários')
-    }
     return res.writeHead(404).end()
 })
 
